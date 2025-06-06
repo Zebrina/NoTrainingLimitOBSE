@@ -1,2 +1,2 @@
-# UnlimitedTrainingOBSE
-Unlimited training for Oblivion Remastered.
+# NoTrainingLimitOBSE
+Unlimited training sessions for Oblivion Remastered.

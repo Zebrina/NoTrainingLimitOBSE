@@ -65,6 +65,8 @@ static bool ApplyPatch()
     }
     while (Module32Next(hSnapshot, &entry));
 
+    CloseHandle(hSnapshot);
+
     if (size == 0)
         return false;
 
@@ -116,7 +118,7 @@ static bool ApplyPatch()
             0xBA, 0xA1, 0x0F, 0x00, 0x00,                       // mov edx,00000FA1 { 4001 }
             0x48, 0x8B, 0x8E, 0x90, 0x00, 0x00, 0x00,           // mov rcx,[rsi+00000090]
             0xE8, -1, -1, -1, -1,                               // call OblivionRemastered-Win64-Shipping.exe+671E700
-            0x48, 0x8D, 0x8C, 0x24, 0x50, 0x01, 0x00, 0x00,     //lea rcx,[rsp + 00000150]
+            0x48, 0x8D, 0x8C, 0x24, 0x50, 0x01, 0x00, 0x00,     // lea rcx,[rsp + 00000150]
         };
 
         BYTE patch[]

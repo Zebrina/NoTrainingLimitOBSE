@@ -44,7 +44,7 @@ static int gMaxTrainingThisLevel = 5;
 
 static int GetMaxTrainingSessionsInitial(PlayerCharacter* player)
 {
-    gMaxTrainingThisLevel = (*gTrainingPerLevel * player->level) - player->timesTrainedTotal + player->timesTrainedThisLevel;
+    gMaxTrainingThisLevel = (*gTrainingPerLevel * (player->level + 1)) - player->timesTrainedTotal + player->timesTrainedThisLevel;
     return gMaxTrainingThisLevel;
 }
 
@@ -59,7 +59,7 @@ static float GetTrainingCost(float skillActorValue)
 
     float defaultCost = *gTrainingCostMult * skillActorValue;
 
-    if (player->timesTrainedTotal >= (*gTrainingPerLevel * player->level))
+    if (player->timesTrainedTotal >= (*gTrainingPerLevel * (player->level + 1)))
         defaultCost *= gOverCapTrainingCostMult;
 
     return defaultCost;

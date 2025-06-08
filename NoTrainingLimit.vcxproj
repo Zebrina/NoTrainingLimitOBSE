@@ -123,6 +123,13 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>obse64_common.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>@echo off
+set OBSEPlugins=C:\Games\Steam\steamapps\common\Oblivion Remastered\OblivionRemastered\Binaries\Win64\OBSE\Plugins\
+xcopy "$(TargetPath)" "%OBSEPlugins%" /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "%OBSEPlugins%" /Y
+@echo on</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -140,6 +147,13 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>obse64_common.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>@echo off
+set OBSEPlugins=C:\Games\Steam\steamapps\common\Oblivion Remastered\OblivionRemastered\Binaries\Win64\OBSE\Plugins\
+xcopy "$(TargetPath)" "%OBSEPlugins%" /Y
+xcopy "$(TargetDir)$(TargetName).pdb" "%OBSEPlugins%" /Y
+@echo on</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />

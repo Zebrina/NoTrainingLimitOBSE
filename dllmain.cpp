@@ -42,9 +42,19 @@ static float* gTrainingCostMult = nullptr;
 
 static int gMaxTrainingThisLevel = 5;
 
+static byte GetPlayerLevel(PlayerCharacter* player)
+{
+    struct TESObjectNPC
+    {
+        byte pad[0x5A];
+        short level;
+    };
+    return reinterpret_cast<TESObjectNPC*>(player->GetBaseForm())->level;
+}
+
 static int GetMaxTrainingSessionsInitial(PlayerCharacter* player)
 {
-    gMaxTrainingThisLevel = (*gTrainingPerLevel * (player->level + 1)) - player->timesTrainedTotal + player->timesTrainedThisLevel;
+    gMaxTrainingThisLevel = (*gTrainingPerLevel * GetPlayerLevel(player)) - player->timesTrainedTotal + player->timesTrainedThisLevel;
     return gMaxTrainingThisLevel;
 }
 
@@ -59,7 +69,7 @@ static float GetTrainingCost(float skillActorValue)
 
     float defaultCost = *gTrainingCostMult * skillActorValue;
 
-    if (player->timesTrainedTotal >= (*gTrainingPerLevel * (player->level + 1)))
+    if (player->timesTrainedTotal >= (*gTrainingPerLevel * GetPlayerLevel(player)))
         defaultCost *= gOverCapTrainingCostMult;
 
     return defaultCost;
@@ -111,8 +121,6 @@ static bool ApplyPatch()
 
     if (readSuccess)
     {
-        // offsetTrainingLimit1 + *(offsetTrainingLimit1 + 2) + 6
-
         // Initial comparison.
         short sigTrainingLimit1[]
         {

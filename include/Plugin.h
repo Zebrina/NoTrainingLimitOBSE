@@ -1,17 +1,16 @@
 #pragma once
 
-#include <string_view>
+#include "OBSE/OBSE.h"
 
-#define PLUGIN_MODNAME "No Training Limit"
-#define PLUGIN_AUTHOR "Zebrina"
+#include <string_view>
 
 using namespace std::literals;
 
 namespace Plugin
 {
-    //inline constexpr auto MODNAME = PLUGIN_MODNAME;
-    //inline constexpr auto AUTHOR = PLUGIN_AUTHOR;
-    inline constexpr auto VERSION = plugin_version::make(1, 1, 6, 0);
+    inline constexpr auto MODNAME = "No Training Limit"sv;
+    inline constexpr auto AUTHOR = "Zebrina"sv;
+    inline constexpr auto VERSION = OBSE::Version{ 1, 1, 6, 0 };
     inline constexpr auto INTERNALNAME = "NoTrainingLimit"sv;
     inline constexpr auto CONFIGFILE = "OBSE\\Plugins\\NoTrainingLimit.toml"sv;
 }

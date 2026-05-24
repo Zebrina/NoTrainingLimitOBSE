@@ -1,19 +1,19 @@
-#include "obse64\PluginAPI.h"
-#include "obse64_common\obse64_version.h"
-#include "obse64_common\BranchTrampoline.h"
-#include "obse64\GameObjects.h"
+#include "OBSE/OBSE.h"
+#include "RE/Oblivion.h"
+#include <REL//REL.h>
 
 #include <BGSScriptExtenderPluginTools.h>
+#include <windows_lean_and_mean.h>
 
 #include "Plugin.h"
 
 #pragma comment(lib, "obse64_common.lib")
 #pragma comment(lib, "BGSScriptExtenderPluginTools.lib")
 
+using namespace RE;
+
 static bool gUnlimitedTraining = true;
 static float gOverCapTrainingCostMult = 1.0f;
-
-static BranchTrampoline gTrampoline;
 
 static PlayerCharacter** gPlayer = nullptr;
 static int gPlayerNpcLevelOffset;
@@ -23,11 +23,6 @@ static int* gTrainingPerLevel = nullptr;
 static float* gTrainingCostMult = nullptr;
 
 static int gMaxTrainingThisLevel = 5;
-
-static short GetPlayerLevel(PlayerCharacter* player)
-{
-    return reinterpret_cast<short*>(player->GetBaseForm())[gPlayerNpcLevelOffset];
-}
 
 static int GetPlayerTimesTrainedThisLevel(PlayerCharacter* player)
 {
@@ -41,7 +36,7 @@ static int GetPlayerTimesTrainedTotal(PlayerCharacter* player)
 
 static int GetMaxTrainingSessionsInitial(PlayerCharacter* player)
 {
-    gMaxTrainingThisLevel = (*gTrainingPerLevel * GetPlayerLevel(player)) - GetPlayerTimesTrainedTotal(player) + GetPlayerTimesTrainedThisLevel(player);
+    gMaxTrainingThisLevel = (*gTrainingPerLevel * player->GetLevel()) - GetPlayerTimesTrainedTotal(player) + GetPlayerTimesTrainedThisLevel(player);
     return gMaxTrainingThisLevel;
 }
 
@@ -56,7 +51,7 @@ static float GetTrainingCost(float skillActorValue)
 
     float cost = *gTrainingCostMult * skillActorValue;
 
-    if (GetPlayerTimesTrainedTotal(player) >= (*gTrainingPerLevel * GetPlayerLevel(player)))
+    if (GetPlayerTimesTrainedTotal(player) >= (*gTrainingPerLevel * player->GetLevel()))
         return cost * gOverCapTrainingCostMult;
 
     return cost;
@@ -377,21 +372,21 @@ static bool ApplyPatch()
             0x90,                           // nop
         };
 
-        re::memory_write(exe.get_base_address() + initializeTrainingLimit.get_offset(), patch, sizeof(patch));
-        re::memory_write(exe.get_base_address() + updateTrainingLimit.get_offset(), patch, sizeof(patch));
+        re::memory_write(initializeTrainingLimit.get_address(), patch, sizeof(patch));
+        re::memory_write(updateTrainingLimit.get_address(), patch, sizeof(patch));
     }
     else
     {
-        gTrampoline.write5Call(exe.get_base_address() + initializeTrainingLimit.get_offset(), (uintptr_t)GetMaxTrainingSessionsInitial);
-        re::memory_write_nop(exe.get_base_address() + initializeTrainingLimit.get_offset() + 5);
-        gTrampoline.write5Call(exe.get_base_address() + updateTrainingLimit.get_offset(), (uintptr_t)GetMaxTrainingSessionsUpdate);
-        re::memory_write_nop(exe.get_base_address() + updateTrainingLimit.get_offset() + 5);
+        REL::GetTrampoline().write_call5(initializeTrainingLimit.get_address(), (uintptr_t)GetMaxTrainingSessionsInitial);
+        re::memory_write_nop(initializeTrainingLimit.get_address() + 5);
+        REL::GetTrampoline().write_call5(updateTrainingLimit.get_address(), (uintptr_t)GetMaxTrainingSessionsUpdate);
+        re::memory_write_nop(updateTrainingLimit.get_address() + 5);
     }
 
-    gTrampoline.write5Call(exe.get_base_address() + initializeTrainingUI.get_offset(), (uintptr_t)GetMaxTrainingSessionsInitial);
-    re::memory_write_nop(exe.get_base_address() + initializeTrainingUI.get_offset() + 5);
-    gTrampoline.write5Call(exe.get_base_address() + updateTrainingUI.get_offset(), (uintptr_t)GetMaxTrainingSessionsUpdate);
-    re::memory_write_nop(exe.get_base_address() + updateTrainingUI.get_offset() + 5);
+    REL::GetTrampoline().write_call5(initializeTrainingUI.get_address(), (uintptr_t)GetMaxTrainingSessionsInitial);
+    re::memory_write_nop(initializeTrainingUI.get_address() + 5);
+    REL::GetTrampoline().write_call5(updateTrainingUI.get_address(), (uintptr_t)GetMaxTrainingSessionsUpdate);
+    re::memory_write_nop(updateTrainingUI.get_address() + 5);
 
     if (gUnlimitedTraining && gOverCapTrainingCostMult > 1.0f)
     {
@@ -400,34 +395,42 @@ static bool ApplyPatch()
             0x0F, 0x28, 0xC8,   // movaps xmm1,xmm0
         };
 
-        gTrampoline.write5Call(exe.get_base_address() + initializeTrainingCost.get_offset(), (uintptr_t)GetTrainingCost);
-        re::memory_write_nop(exe.get_base_address() + initializeTrainingCost.get_offset() + 5, 3);
-        gTrampoline.write5Call(exe.get_base_address() + updateTrainingCost.get_offset(), (uintptr_t)GetTrainingCost);
-        re::memory_write_nop(exe.get_base_address() + updateTrainingCost.get_offset() + 5, 3);
+        REL::GetTrampoline().write_call5(initializeTrainingCost.get_address(), (uintptr_t)GetTrainingCost);
+        re::memory_write_nop(initializeTrainingCost.get_address() + 5, 3);
+        REL::GetTrampoline().write_call5(updateTrainingCost.get_address(), (uintptr_t)GetTrainingCost);
+        re::memory_write_nop(updateTrainingCost.get_address() + 5, 3);
     }
 
     return true;
 }
 
-extern "C" __declspec(dllexport) OBSEPluginVersionData OBSEPlugin_Version =
-{
-    OBSEPluginVersionData::kVersion,
-    1,
-    PLUGIN_MODNAME,
-    PLUGIN_AUTHOR,
-    OBSEPluginVersionData::kAddressIndependence_Signatures,
-    OBSEPluginVersionData::kStructureIndependence_NoStructs,
-    { },
-    0,
-    0, 0, 0	// Reserved
-};
+OBSE_PLUGIN_VERSION = []()
+    {
+        OBSE::PluginVersionData v{};
 
-extern "C" __declspec(dllexport) bool __cdecl OBSEPlugin_Load(const OBSEInterface* obse)
+        v.PluginVersion(Plugin::VERSION);
+        v.PluginName(Plugin::MODNAME);
+        v.AuthorName(Plugin::AUTHOR);
+        v.UsesAddressLibrary(true);
+        v.HasNoStructUse(true);
+        //v.UsesUpdatedStructs();
+        //v.CompatibleVersions({ OBSE::Version{ 0, 0, 0, 1 } });
+
+        return v;
+    }();
+
+OBSE_PLUGIN_LOAD(const OBSE::LoadInterface* obse)
 {
     if (!plugin_log::initialize(Plugin::INTERNALNAME))
         return false;
 
-    OBSETrampolineInterface* trampolineInterface = static_cast<OBSETrampolineInterface*>(obse->QueryInterface(kInterface_Trampoline));
+    OBSE::InitInfo info{};
+    info.log = false;
+    info.trampoline = true;
+    info.trampolineSize = 128;
+    OBSE::Init(obse, info);
+
+    OBSE::TrampolineInterface* trampolineInterface = static_cast<OBSE::TrampolineInterface*>(obse->QueryInterface(OBSE::LoadInterface::kTrampoline));
     if (!trampolineInterface)
     {
         plugin_log::err("Failed to query OBSE trampoline interface."sv);
@@ -440,9 +443,6 @@ extern "C" __declspec(dllexport) bool __cdecl OBSEPlugin_Load(const OBSEInterfac
 
     gUnlimitedTraining = config.get(configSection, "bUnlimitedTraining"sv, true);
     gOverCapTrainingCostMult = config.get(configSection, "fOverCapTrainingCostMult"sv, 2.0f);
-
-    constexpr const size_t trampolineSize = 128;
-    gTrampoline.setBase(trampolineSize, trampolineInterface->AllocateFromBranchPool(obse->GetPluginHandle(), trampolineSize));
 
     bool success = ApplyPatch();
     if (success)

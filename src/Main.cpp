@@ -7,7 +7,7 @@
 
 #include "Plugin.h"
 
-#pragma comment(lib, "obse64_common.lib")
+#pragma comment(lib, "commonlibob64.lib")
 #pragma comment(lib, "BGSScriptExtenderPluginTools.lib")
 
 using namespace RE;
@@ -15,7 +15,6 @@ using namespace RE;
 static bool gUnlimitedTraining = true;
 static float gOverCapTrainingCostMult = 1.0f;
 
-static PlayerCharacter** gPlayer = nullptr;
 static int gPlayerNpcLevelOffset;
 static int gPlayerTimesTrainedThisLevelOffset;
 static int gPlayerTimesTrainedTotalOffset;
@@ -47,7 +46,7 @@ static int GetMaxTrainingSessionsUpdate(PlayerCharacter* player)
 
 static float GetTrainingCost(float skillActorValue)
 {
-    PlayerCharacter* player = *gPlayer;
+    PlayerCharacter* player = PlayerCharacter::GetSingleton();
 
     float cost = *gTrainingCostMult * skillActorValue;
 
@@ -354,7 +353,6 @@ static bool ApplyPatch()
         return false;
     }
 
-    gPlayer = (PlayerCharacter**)initializeTrainingCost.get_4byte_displacement("PlayerCharacter singleton (PlayerCharacter**)", 22);
     gTrainingPerLevel = (int*)initializeTrainingLimit.get_4byte_displacement("TrainingPerLevel (int*)", 2);
     gTrainingCostMult = (float*)initializeTrainingCost.get_4byte_displacement("TrainingCostMult (float*)", 4);
     gPlayerNpcLevelOffset = (int)playerLevel.get_value<byte>("npc level component offset", 38) + (int)playerLevel.get_value<byte>("level component level offset", 6);
